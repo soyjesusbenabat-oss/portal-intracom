@@ -14,7 +14,16 @@
   ];
 
   function poner() {
-    if (!document.head || document.querySelector('link[rel="icon"]')) return;
+    if (!document.head) return;
+    // El empaquetador reescribe el icono del diseño como un blob: efímero y sin dirección estable.
+    // Se sustituye por los archivos del sitio.
+    var puestos = document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]');
+    var bueno = false;
+    Array.prototype.forEach.call(puestos, function (l) {
+      if ((l.getAttribute("href") || "").indexOf("blob:") === 0) l.remove();
+      else bueno = true;
+    });
+    if (bueno) return;
     ICONOS.forEach(function (i) {
       var l = document.createElement("link");
       l.rel = i[0];
