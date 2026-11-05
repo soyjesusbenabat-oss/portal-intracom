@@ -110,6 +110,7 @@
    * que el pie ya trae el documento y se quitaría a sí misma en el siguiente repaso.
    */
   function nuestro(a) {
+    if (a.getAttribute("data-cookies-abrir")) return true;
     for (var n = a; n && n.nodeType === 1; n = n.parentNode) {
       if (n.id === BARRA_ID || n.id === "intracom-cookies") return true;
       var c = n.className;
@@ -157,29 +158,51 @@
     (document.head || document.documentElement).appendChild(s);
   }
 
-  /**
-   * Barra al final de la página con los documentos que el pie no traía y, si hay aviso de cookies,
-   * el enlace para cambiar la decisión: retirar el permiso tiene que poder hacerse desde cualquier web.
-   */
+  /** Barra al final de la página con los documentos que el pie no traía. */
   function barra(faltan, lang) {
     var vieja = document.getElementById(BARRA_ID);
     var firma = lang + ":" + faltan.join(",");
     // Rehacerla sin motivo volvería a disparar el observador y el enlace no llegaría a poder pulsarse
     if (vieja && vieja.getAttribute("data-firma") === firma) return;
     if (vieja) vieja.parentNode.removeChild(vieja);
-    if (!faltan.length && !CFG.banner) return;
+    if (!faltan.length) return;
     estilo();
     var div = document.createElement("div");
     div.id = BARRA_ID;
     div.setAttribute("data-firma", firma);
     var partes = [];
-    if (faltan.length) partes.push("<span>© " + new Date().getFullYear() + " " + CFG.titular + "</span>");
+    partes.push("<span>© " + new Date().getFullYear() + " " + CFG.titular + "</span>");
     for (var i = 0; i < faltan.length; i++) {
       partes.push('<a href="' + url(faltan[i], lang) + '" data-legal="' + faltan[i] + '">' + rotulo(faltan[i], lang) + "</a>");
     }
-    if (CFG.banner) partes.push('<a href="#" data-cookies-abrir="1">' + (CFG.etiquetas[lang] || CFG.etiquetas[CFG.idiomas[0]]).preferencias + "</a>");
+    if (CFG.banner && faltan.indexOf("cookies") >= 0) partes.push('<a href="#" data-cookies-abrir="1">' + preferencias(lang) + "</a>");
     div.innerHTML = partes.join('<span class="sep">·</span>');
     document.body.appendChild(div);
+  }
+
+  function preferencias(lang) {
+    return (CFG.etiquetas[lang] || CFG.etiquetas[CFG.idiomas[0]]).preferencias;
+  }
+
+  /**
+   * Si el pie ya trae «Cookies», al lado va el enlace para cambiar la decisión, con su mismo aspecto:
+   * retirar el permiso tiene que poder hacerse desde cualquier web. No va en la barra porque algunas
+   * webs tienen el <body> de altura fija y lo que se le añade al final cae encima del contenido.
+   */
+  function enlacePreferencias(lang) {
+    if (!CFG.banner) return;
+    var cookies = document.querySelector('a[data-legal="cookies"]');
+    if (!cookies || nuestro(cookies)) return;
+    var a = cookies.nextElementSibling;
+    if (!a || !a.getAttribute("data-cookies-abrir")) {
+      a = document.createElement("a");
+      a.className = cookies.className;
+      a.style.cssText = cookies.style.cssText;
+      a.setAttribute("href", "#");
+      a.setAttribute("data-cookies-abrir", "1");
+      cookies.parentNode.insertBefore(a, cookies.nextSibling);
+    }
+    if (a.textContent !== preferencias(lang)) a.textContent = preferencias(lang);
   }
 
   function aplicar() {
@@ -189,6 +212,7 @@
     var faltan = [];
     for (var i = 0; i < DOCS.length; i++) if (!vistos[DOCS[i]]) faltan.push(DOCS[i]);
     barra(faltan, lang);
+    enlacePreferencias(lang);
   }
 
   var pendiente = null;
