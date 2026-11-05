@@ -157,16 +157,23 @@
     (document.head || document.documentElement).appendChild(s);
   }
 
-  /** Barra al final de la página con los documentos que el pie no traía. */
+  /**
+   * Barra al final de la página con los documentos que el pie no traía y, si hay aviso de cookies,
+   * el enlace para cambiar la decisión: retirar el permiso tiene que poder hacerse desde cualquier web.
+   */
   function barra(faltan, lang) {
     var vieja = document.getElementById(BARRA_ID);
+    var firma = lang + ":" + faltan.join(",");
+    // Rehacerla sin motivo volvería a disparar el observador y el enlace no llegaría a poder pulsarse
+    if (vieja && vieja.getAttribute("data-firma") === firma) return;
     if (vieja) vieja.parentNode.removeChild(vieja);
-    if (!faltan.length) return;
+    if (!faltan.length && !CFG.banner) return;
     estilo();
     var div = document.createElement("div");
     div.id = BARRA_ID;
+    div.setAttribute("data-firma", firma);
     var partes = [];
-    partes.push("<span>© " + new Date().getFullYear() + " " + CFG.titular + "</span>");
+    if (faltan.length) partes.push("<span>© " + new Date().getFullYear() + " " + CFG.titular + "</span>");
     for (var i = 0; i < faltan.length; i++) {
       partes.push('<a href="' + url(faltan[i], lang) + '" data-legal="' + faltan[i] + '">' + rotulo(faltan[i], lang) + "</a>");
     }
