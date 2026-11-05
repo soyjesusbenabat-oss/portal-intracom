@@ -25,7 +25,7 @@
     }
   },
   "titular": "Portal Intracom",
-  "banner": false
+  "banner": true
 };
 
   var DOCS = ["aviso-legal", "privacidad", "cookies"];
