@@ -162,8 +162,10 @@
   function barra(faltan, lang) {
     var vieja = document.getElementById(BARRA_ID);
     var firma = lang + ":" + faltan.join(",");
+    var pies = document.querySelectorAll("footer");
+    var pie = pies.length ? pies[pies.length - 1] : null;
     // Rehacerla sin motivo volvería a disparar el observador y el enlace no llegaría a poder pulsarse
-    if (vieja && vieja.getAttribute("data-firma") === firma) return;
+    if (vieja && vieja.getAttribute("data-firma") === firma && (!pie || vieja.previousElementSibling === pie)) return;
     if (vieja) vieja.parentNode.removeChild(vieja);
     if (!faltan.length) return;
     estilo();
@@ -177,7 +179,9 @@
     }
     if (CFG.banner && faltan.indexOf("cookies") >= 0) partes.push('<a href="#" data-cookies-abrir="1">' + preferencias(lang) + "</a>");
     div.innerHTML = partes.join('<span class="sep">·</span>');
-    document.body.appendChild(div);
+    // Detrás del pie, no al final del <body>: con el <body> de altura fija caería encima del contenido
+    if (pie) pie.parentNode.insertBefore(div, pie.nextSibling);
+    else document.body.appendChild(div);
   }
 
   function preferencias(lang) {
@@ -186,8 +190,7 @@
 
   /**
    * Si el pie ya trae «Cookies», al lado va el enlace para cambiar la decisión, con su mismo aspecto:
-   * retirar el permiso tiene que poder hacerse desde cualquier web. No va en la barra porque algunas
-   * webs tienen el <body> de altura fija y lo que se le añade al final cae encima del contenido.
+   * retirar el permiso tiene que poder hacerse desde cualquier web.
    */
   function enlacePreferencias(lang) {
     if (!CFG.banner) return;
